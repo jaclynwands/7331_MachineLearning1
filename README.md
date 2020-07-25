@@ -16,7 +16,7 @@ Please feel free to contact any of the members below:
  - Matt Chinchilla: mchinchilla@smu.edu
  - Jaclyn Coate: jcoate@smu.edu 
  
- [Labs]: <>
- [Live Class Assignments]: <https://github.com/JaclynCoate/7331_MachineLearning1/tree/master/LiveSessionAssignments>
+ [Labs]: <https://github.com/JaclynCoate/7331_MachineLearning1/tree/master/Labs>
+ [Live Session Assignments]: <https://github.com/JaclynCoate/7331_MachineLearning1/tree/master/LiveSessionAssignments>
  [Extra Credit]: <>
  [Data]: <>
