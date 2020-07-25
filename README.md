@@ -1,7 +1,7 @@
 # MSDS 7331 Machine Learning 1
 
 ## Introduction
-The purpose of this repository is to share our collaborative work in order to complete our MSDS 7331 Machine Learning work. We worked collaboratively as a team all semester to complete the: labs, live session assignments, and extra credit assignment. This work was completed in ipynb documents using jupyter notebook/lab. 
+The purpose of this repository is to share our collaborative work in order to complete our MSDS 7331 Machine Learning work. We worked collaboratively as a team to complete the: labs, live session assignments, and extra credit assignment. This work was completed in ipynb documents using jupyter notebook/lab. 
 
 ## Github Case Study Structure
 * [Labs] - 4 assignments give in the semester to evaluate a single data set chosen in the first week of class
