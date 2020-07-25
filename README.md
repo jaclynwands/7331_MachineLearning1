@@ -11,10 +11,10 @@ The purpose of this repository is to share our collaborative work in order to co
 
 ## Contributors
 Please feel free to contact any of the members below: 
- - Jaclyn Coate: jcoate@smu.edu 
  - Megan Riley: rileym@smu.edu
  - Reagan Meagher: rmeagher@smu.edu
  - Matt Chinchilla: mchinchilla@smu.edu
+ - Jaclyn Coate: jcoate@smu.edu 
  
  [Labs]: <>
  [In Class Assignments]: <>
