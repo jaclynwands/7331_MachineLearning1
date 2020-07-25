@@ -17,6 +17,6 @@ Please feel free to contact any of the members below:
  - Jaclyn Coate: jcoate@smu.edu 
  
  [Labs]: <>
- [In Class Assignments]: <>
+ [Live Class Assignments]: <https://github.com/JaclynCoate/7331_MachineLearning1/tree/master/LiveSessionAssignments>
  [Extra Credit]: <>
  [Data]: <>
