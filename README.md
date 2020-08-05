@@ -4,9 +4,9 @@
 The purpose of this repository is to share our work in order to complete our MSDS 7331 Machine Learning I course. We collaborated as a team to complete the: labs, live session assignments, and extra credit assignment. This work was completed in ipynb documents using jupyter notebook/lab. 
 
 ## Github Case Study Structure
-* [Labs] - 4 assignments give in the semester to evaluate a single data set chosen in the first week of class
+* [Labs] - 4 assignments given in the semester to evaluate a single data set chosen in the first week of class
 * [Live Session Assignments] - 5 in class assignments where we worked to answer questions about certain Python features being taught that unit
-* [Extra Credit] - an assignment in predicting COVID new cases in Texas
+* [Extra Credit] - an assignment in predicting new COVID cases in Texas
 * [Data] - chosen data source for lab projects
 
 ## Contributors
