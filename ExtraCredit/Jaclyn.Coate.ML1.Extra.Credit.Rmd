@@ -1,0 +1,254 @@
+---
+title: "ML1.Extra.Credit"
+author: "Jaclyn A Coate"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tswge)
+library(nnfor)
+library(tswgewrapped)
+library(ggplot2)
+library(ggthemes)
+```
+
+# Extra Credit Summer 2020: Forecasting Texas New Covid Cases
+## EDA
+### Train Data load:
+
+```{r train data load}
+train <- read.csv("https://raw.githubusercontent.com/JaclynCoate/7331_MachineLearning1/master/ExtraCredit/traindaily.csv", header = T)
+head(train)
+train <- transform(train, date = as.Date(as.character(date), "%Y%m%d"))
+train = train[order(as.Date(train$date, format = "%Y%m%d")),]
+head(train)
+```
+
+### Test Data Load:
+
+```{r test data load}
+test <- read.csv("https://raw.githubusercontent.com/jakemdrew/CoronaCurves/master/Corona_MAE.csv", header = T)
+head(test)
+```
+
+### N/A Evaluation:
+
+```{r na eval}
+train[is.na(train)] <- 0
+tail(train)
+```
+
+### Realization, ACF, Spectral Density Evluation
+
+- Actual Realization
+
+```{r actual realization}
+ggplot(data = train, aes(x=date, y=positiveIncrease))+
+  geom_line(color="dark red")+
+  labs(title = "New Texas COVID Cases", y = "Thousands", x = "") +
+  theme_fivethirtyeight()
+```
+
+- Sample Realization, ACF, Spectral Density
+  - Realization: heavy wandering and pseudo cyclic behavior
+  - ACF: Slowly dampening and what appears to be a slight seasonal componenet rising
+  - Spectral Density: f = 0, and f = .28 indicative of a period = 3.5
+  
+```{r sample plots}
+plotts.sample.wge(train$positiveIncrease)
+```
+
+### Transformations
+
+- Single transformation to accound for heavy wandering and what appears to be a (1-B) component
+  - We see much stationarized data however have surface a seasonality componentn of 7, seeing spikes in the ACF at 7, 14, 21 etc.
+
+```{r d trans}
+train.diff = artrans.wge(train$positiveIncrease, phi.tr = 1)
+```
+
+- Seasonality Transformation
+  - Above we have surfaced what appears to be a 7-day seasonality trend. We will now transform the data for the s=7.
+
+```{r seasonal trans}
+train.diff.seas = artrans.wge(train.diff,phi.tr = c(0,0,0,0,0,0,1))
+```
+
+### Diagnose Model
+- Using AIC5.wge we diagnose the data for the best fit model using AIC and BIC.
+  - AIC: ARMA(5,1)
+  - BIC: MA(1)
+
+```{r diagnose model with aic}
+aic5.wge(train.diff.seas)
+aic5.wge(train.diff.seas,type = "bic")
+```
+
+- White noise evaluation
+  - We have confirmed this not white noise and will need to be modeled appropriately.
+
+```{r white noise p values}
+ljung.wge(train.diff.seas)$pval
+ljung.wge(train.diff.seas, K=48)$pval
+```
+
+- We choose to model both for best NN MSE: Phis and Thetas
+
+```{r aic phis theta estimates}
+est.train.diff.seasAIC = est.arma.wge(train.diff.seas, p = 5, q=1)
+mean(train$positiveIncrease)
+```
+
+```{r bic phis theta estimates}
+est.train.diff.seasBIC = est.arma.wge(train.diff.seas, q=1)
+est.train.diff.seasBIC
+```
+
+## Univariate ARIMA(5,1,1), s=7 Forecasting
+
+- Forecast for ARIMA(5,1,1), s = 7
+
+```{r}
+arima5.1.Fore <- fore.aruma.wge(train$positiveIncrease, phi = est.train.diff.seasAIC$phi, theta = est.train.diff.seasAIC$theta, d = 1, s = 7, n.ahead = 32, lastn = F, limit = T)
+```
+
+- Predicted versus Actual for ARIMA(5,1,1), s = 7
+
+```{r}
+plot(arima5.1.Fore$f, type = "l", ylim = c(4500, 12500))
+lines(test$TX.New.Cases, col = "red")
+```
+
+- Mean Absolute Error for Forecast for ARIMA(5,1,1), s = 7
+
+```{r}
+mae.5.1 = mean(abs(arima5.1.Fore$f - test$TX.New.Cases))
+mae.5.1
+```
+
+
+### Univariate ARIMA(0,1,1), s=7 Forecasting
+
+```{r}
+arima0.1Fore <- fore.aruma.wge(train$positiveIncrease, phi = 0, theta = .705885, d = 1, s = 7, n.ahead = 32, lastn = F, limit = T)
+```
+
+- Predicted versus Actual for ARIMA(0,1,1), s = 7
+
+```{r}
+plot(arima0.1Fore$f, type = "l", ylim = c(4500, 12500))
+lines(test$TX.New.Cases, col = "red")
+```
+
+- Mean Absolute Error for Forecast for ARIMA(0,1,1), s = 7
+
+```{r}
+mae.0.1 = mean(abs(arima0.1Fore$f - test$TX.New.Cases))
+mae.0.1
+```
+
+### Univariate Hypertuned Neural Network Model
+
+- Hyper tune parameters
+  - Here we are running specialty function contained in tswgewrapped package that allows us to perform a grid search that will complete the tuning of all parameters to obtain the one with the lowest windowed M/ASE.
+
+```{r}
+set.seed(2)
+nntrain <- data.frame(positiveIncrease = train$positiveIncrease, xx = rnorm(125, 0, .0001))
+nntest <- data.frame(TX.New.Cases = test$TX.New.Cases, xx = rnorm(32, 0, .0001))
+```
+
+```{r}
+# search for best NN hyperparameters in given grid
+nnmodeltune = tswgewrapped::ModelBuildNNforCaret$new(data = nntrain, var_interest = "positiveIncrease",
+                                               search = 'random', tuneLength = 5, parallel = TRUE,
+                                               batch_size = 50, h = 7, m = 7,
+                                               verbose = 1)
+```
+
+- The windowed mean squared errors associated with the grid of hyperparameters is shown in the table and heatmap below.
+
+```{r}
+res <- nnmodeltune$summarize_hyperparam_results()
+res
+```
+
+```{r plot hyper parameters}
+nnmodeltune$plot_hyperparam_results()
+```
+
+- Best Parameters shown in below table. The best hyperparameters based on this grid search are listed below
+
+```{r}
+best <- nnmodeltune$summarize_best_hyperparams()
+best
+```
+
+- NN Windowed RMSE is below.
+
+```{r}
+final.rmse <- dplyr::filter(res, reps == best$reps &
+                    hd == best$hd &
+                    allow.det.season == best$allow.det.season)[['RMSE']]
+final.rmse
+```
+
+- NN Modell Characteristics and MSE: 
+
+```{r}
+# Ensemble / Hypertuned NN Model
+caret_model = nnmodeltune$get_final_models(subset = 'a')
+caret_model$finalModel
+```
+
+```{r}
+#Plot Final Model
+plot(caret_model$finalModel)
+```
+
+- Fit trian data on best model parameters
+
+```{r model best nn parameters}
+set.seed(2)
+nnmodel = mlp(ts(train$positiveIncrease), outplot = T, reps = 22, hd = 3, allow.det.season = F)
+nnmodel
+```
+
+- NN Forecasts
+
+```{r forecast nnmodel}
+fore32.nnmodel = forecast(nnmodel, h=32)
+```
+
+- Plotting NN Forecasts
+
+```{r plot forecast of nn model}
+plot(fore32.nnmodel)
+```
+
+- Ploting NN Predictions versus Actual
+
+```{r plot predictions v actual}
+plot(fore32.nnmodel, ylim = c(0, 12500))
+lines(seq(120,151), test$TX.New.Cases, type = "l", col = "red")
+```
+
+- NN: Mean Absolute Error
+
+```{r}
+nnMAE = mean(abs(fore32.nnmodel$mean - test$TX.New.Cases))
+nnMAE
+```
+
+## Final Model Comparison
+
+### Univariate ARIMA(5,1,1), s = 7
+- MAE: 1859.352
+
+### Univariate ARIMA(0,1,1), s = 7
+- MAE: 2095.586
+
+### Hyper Tuned MLP 
+- MAE: 3292.661
