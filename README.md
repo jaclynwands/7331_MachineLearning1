@@ -6,7 +6,7 @@ The purpose of this repository is to share our work in order to complete our MSD
 ## Github Case Study Structure
 * [Labs] - 4 assignments given in the semester to evaluate a single data set chosen in the first week of class
 * [Live Session Assignments] - 5 in class assignments where we worked to answer questions about certain Python features being taught that unit
-* [Extra Credit] - an assignment in predicting new COVID cases in Texas
+* [Extra Credit] - an assignment in predicting new COVID cases in Texas that had to be submitted indiviaully. The one found here is Jaclyn Coate's.
 * [Data] - chosen data source for lab projects
 
 ## Contributors
